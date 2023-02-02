@@ -1,0 +1,190 @@
+name: Deploy to production environment
+on:
+  push:
+    paths:
+      - "terraform/*"
+      - ".github/workflows/terraform-prod.yaml"
+    branches:
+      - "main"
+
+env:
+  TF_VAR_project_id: "luna-gcs-prod-98604"
+  TF_VAR_project_number: "366219"
+  TF_VAR_git_org: "lunalectric"
+  TF_VAR_git_repo: "gcp-luna-gcs"
+  TF_VAR_team: "platform-engineering"
+  TF_VAR_environment: "prod"
+  TF_VAR_terraform_by_managed: "true"
+  MONDOO_CONFIG_BASE64: ${{ secrets.MONDOO_CONFIG_BASE64 }}
+
+
+defaults:
+  run:
+    working-directory: ./terraform
+
+jobs:
+  terraform-pre-plan-tests:
+    name: "Terraform pre-plan testing"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: 'actions/checkout@v3'
+
+    - id: 'google-cloud-auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+    - uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      id: init
+      run: terraform init -reconfigure
+
+    - name: Terraform workspace prod
+      id: prod-workspace
+      run: terraform workspace select prod 
+
+    - name: Terraform Format
+      id: fmt
+      run: terraform fmt -check  
+
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+
+    - name: Setup cnspec
+      id: setup-cnspec
+      run: | 
+        curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
+        cnspec version
+
+    - name: cnspec pre-plan security scan
+      id: cnspec-pre-plan-scan-summary
+      run: |
+        echo "### cnspec pre-plan security scan :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        cnspec scan terraform . >> $GITHUB_STEP_SUMMARY
+        echo "CNSPEC_PRE_SCAN=$GITHUB_STEP_SUMMARY" >> $GITHUB_ENV
+
+  terraform-post-plan-testing:
+    name: "Terraform post-plan testing"
+    needs: terraform-pre-plan-tests
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+    - uses: 'actions/checkout@v3'
+
+    - id: 'google-cloud-auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+    - uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_wrapper: false  
+
+    - name: Terraform Init
+      id: init
+      run: terraform init -reconfigure
+
+    - name: Terraform workspace prod
+      id: prod-workspace
+      run: terraform workspace select prod 
+
+    - name: Terraform Plan
+      id: plan
+      run: terraform plan -no-color -input=false -var-file=prod.tfvars
+      continue-on-error: true
+
+    - name: Convert Terraform plan to json
+      id: plan-to-json
+      run: |
+        terraform plan -var-file=prod.tfvars -out prod.tfplan
+        terraform show -json prod.tfplan >> prod.json
+
+    - name: Setup cnspec
+      id: setup-cnspec
+      run: | 
+        curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
+        cnspec version
+
+    - name: cnspec scan Terraform plan
+      id: cnspec-post-plan-scan
+      env:
+        MONDOO_CONFIG_BASE64: ${{ secrets.MONDOO_CONFIG_BASE64 }}
+      run: |
+        echo "### cnspec Terraform plan scan :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        cnspec scan terraform plan prod.json >> $GITHUB_STEP_SUMMARY 
+
+    - uses: actions/upload-artifact@v3
+      name: Upload prod.json
+      with:
+        name: prod.json
+        path: ./terraform/prod.json
+
+  terraform-apply:
+    name: "Terraform apply to prod environment"
+    needs: terraform-post-plan-testing
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: 'actions/checkout@v3' 
+
+    - id: 'google-cloud-auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+    - uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_wrapper: false 
+
+    - name: Terraform Init
+      id: terraform-apply-init
+      run: terraform init -reconfigure 
+
+    - name: Terraform workspace prod
+      id: prod-workspace
+      run: terraform workspace select prod 
+
+    - name: Terraform Apply
+      id: run-terraform-apply
+      run: terraform apply -auto-approve -input=false -var-file=prod.tfvars
+
+  cnspec-runtime-scan:
+    name: "cnspec security scan: prod environment"
+    needs: terraform-apply
+    permissions:
+      pull-requests: write
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: 'actions/checkout@v3'
+
+    - id: 'google-cloud-auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+    - name: Setup cnspec
+      id: setup-cnspec
+      run: | 
+        curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
+        cnspec version
+
+    - name: 'cnspec security scan: prod'
+      id: gcp-runtime-scan
+      run: |
+        echo "### cnspec runtime scan of prod ${{ env.TF_VAR_project_id }} :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY        
+        cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} >> $GITHUB_STEP_SUMMARY
