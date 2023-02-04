@@ -1,4 +1,4 @@
-name: Deploy to Edge environment
+name: DEV TEST & DEPLOY
 on:
   pull_request:
     paths:
@@ -55,10 +55,10 @@ jobs:
         curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
         cnspec version
 
-    - name: cnspec pre-plan security scan
+    - name: "Security scan: TERRAFORM HCL"
       id: cnspec-pre-plan-scan-summary
       run: |
-        echo "### cnspec pre-plan security scan :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "###Security scan: TERRAFORM HCL :white_check_mark:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         cnspec scan terraform . >> $GITHUB_STEP_SUMMARY
         echo "CNSPEC_PRE_SCAN=$GITHUB_STEP_SUMMARY" >> $GITHUB_ENV
@@ -108,12 +108,12 @@ jobs:
         curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
         cnspec version
 
-    - name: cnspec scan Terraform plan
+    - name: "Security scan: TERRAFORM PLAN"
       id: cnspec-post-plan-scan
       env:
         MONDOO_CONFIG_BASE64: ${{ secrets.MONDOO_CONFIG_BASE64 }}
       run: |
-        echo "### cnspec Terraform plan scan :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "###Security scan: TERRAFORM PLAN :white_check_mark:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         cnspec scan terraform plan edge.json >> $GITHUB_STEP_SUMMARY 
 
@@ -155,7 +155,7 @@ jobs:
         path: ./terraform/edge.json
 
   terraform-apply:
-    name: "Terraform apply - edge environment"
+    name: "Deploy changes: DEVELOPMENT ENVIRONMENT"
     needs: terraform-post-plan-testing
     runs-on: ubuntu-latest
 
@@ -185,7 +185,7 @@ jobs:
       run: terraform apply -auto-approve -input=false -var-file=edge.tfvars
 
   cnspec-runtime-scan:
-    name: "cnspec security scan: edge"
+    name: "Security scan: DEVELOPMENT ENVIRONMENT"
     needs: terraform-apply
     permissions:
       pull-requests: write
@@ -207,9 +207,31 @@ jobs:
         curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
         cnspec version
 
-    - name: 'cnspec security scan: edge'
+    - name: 'Security scan - DEV environment'
       id: gcp-runtime-scan
       run: |
-        echo "### cnspec security scan of edge ${{ env.TF_VAR_project_id }} :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "### Security scan: EDGE environment - ${{ env.TF_VAR_project_id }} :white_check_mark:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY        
         cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} >> $GITHUB_STEP_SUMMARY
+
+    - name: Notify Platform Engineering (Slack)
+      id: slack
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        # For posting a rich message using Block Kit
+        payload: |
+          {
+            "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

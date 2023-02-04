@@ -1,4 +1,4 @@
-name: Deploy to production environment
+name: PRODUCTION TEST & DEPLOY
 on:
   push:
     paths:
@@ -64,7 +64,7 @@ jobs:
     - name: cnspec pre-plan security scan
       id: cnspec-pre-plan-scan-summary
       run: |
-        echo "### cnspec pre-plan security scan :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "### cnspec pre-plan security scan :white_check_mark:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         cnspec scan terraform . >> $GITHUB_STEP_SUMMARY
         echo "CNSPEC_PRE_SCAN=$GITHUB_STEP_SUMMARY" >> $GITHUB_ENV
@@ -119,7 +119,7 @@ jobs:
       env:
         MONDOO_CONFIG_BASE64: ${{ secrets.MONDOO_CONFIG_BASE64 }}
       run: |
-        echo "### cnspec Terraform plan scan :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "### cnspec Terraform plan scan :white_check_mark:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         cnspec scan terraform plan prod.json >> $GITHUB_STEP_SUMMARY 
 
@@ -130,7 +130,7 @@ jobs:
         path: ./terraform/prod.json
 
   terraform-apply:
-    name: "Terraform apply to prod environment"
+    name: "Deploy changes: PRODUCTION ENVIRONMENT"
     needs: terraform-post-plan-testing
     runs-on: ubuntu-latest
 
@@ -160,7 +160,7 @@ jobs:
       run: terraform apply -auto-approve -input=false -var-file=prod.tfvars
 
   cnspec-runtime-scan:
-    name: "cnspec security scan: prod environment"
+    name: "Security scan: PRODUCTION ENVIRONMENT"
     needs: terraform-apply
     permissions:
       pull-requests: write
@@ -182,9 +182,31 @@ jobs:
         curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
         cnspec version
 
-    - name: 'cnspec security scan: prod'
+    - name: 'Security scan: PRODUCTION'
       id: gcp-runtime-scan
       run: |
-        echo "### cnspec runtime scan of prod ${{ env.TF_VAR_project_id }} :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "### Security scan: PRODUCTION -  ${{ env.TF_VAR_project_id }} :white_check_mark:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY        
         cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} >> $GITHUB_STEP_SUMMARY
+
+    - name: Notify Platform Engineering (Slack)
+      id: slack
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        # For posting a rich message using Block Kit
+        payload: |
+          {
+            "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
