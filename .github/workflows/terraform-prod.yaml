@@ -1,4 +1,4 @@
-name: PRODUCTION TEST & DEPLOY
+name: "2. Production: Test / Deploy / Scan"
 on:
   push:
     paths:

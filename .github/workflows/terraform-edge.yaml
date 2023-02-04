@@ -1,4 +1,4 @@
-name: DEV TEST & DEPLOY
+name: "1. Development: Test / Deploy / Scan"
 on:
   pull_request:
     paths:
@@ -221,7 +221,7 @@ jobs:
         # For posting a rich message using Block Kit
         payload: |
           {
-            "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+            "text": "Deploy: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
             "blocks": [
               {
                 "type": "section",
