@@ -196,6 +196,12 @@ jobs:
       id: gen-cnspec-url
       run: echo "scan-url=$(cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} -j | jq ".assets | .. | .url? | select(.) ")" >> $GITHUB_OUTPUT
 
+  notify-slack:
+    name: "Send Slack notification"
+    runs-on: ubuntu-latest
+    needs: cnspec-runtime-scan
+
+    steps:
     - name: Notify Platform Engineering (Slack)
       id: slack
       uses: slackapi/slack-github-action@v1.23.0
@@ -219,7 +225,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*Mondoo security scan report:* <${{ needs.step.gen-cnspec-url.outputs.scan-url }}|Click here to view report in the Mondoo console>"
+                  "text": "*Mondoo security scan report:* <${{ needs.cnspec-runtime-scan.outputs.scan-url }}|Click here to view report in the Mondoo console>"
                 }
               }
             ]
