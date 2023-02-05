@@ -223,6 +223,10 @@ jobs:
         sudo apt install -y jq
         jq --version
 
+    - name: generate cnspec scan report 
+      id: gen-cnspec-url
+      run: cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} -j | jq ".assets | .. | .url? | select(.) "
+
     - name: Notify Platform Engineering (Slack)
       id: slack
       uses: slackapi/slack-github-action@v1.23.0
@@ -254,7 +258,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*Mondoo security scan status:* ${{ steps.gcp-dev-runtime-scan.output.outcome }}\n*Scan report:*"
+                  "text": "*Mondoo security scan report:* <${{ steps.gen-cnspec-url.output }}|Click here to view report in the Mondoo console>"
                 }
               }
             ]
