@@ -217,6 +217,12 @@ jobs:
         echo "**Opened by:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY        
         cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} >> $GITHUB_STEP_SUMMARY
 
+    - name: Install jq
+      id: install-jq
+      run: |
+        sudo apt install -y jq
+        jq --version
+
     - name: Notify Platform Engineering (Slack)
       id: slack
       uses: slackapi/slack-github-action@v1.23.0
