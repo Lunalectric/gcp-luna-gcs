@@ -231,7 +231,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "${{ env.CNSPEC_DEV_SCAN }}"
+                  "text": "$CNSPEC_DEV_SCAN"
                 }
               }
             ]
