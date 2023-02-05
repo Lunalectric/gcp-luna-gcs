@@ -185,7 +185,7 @@ jobs:
       run: terraform apply -auto-approve -input=false -var-file=edge.tfvars
 
   cnspec-runtime-scan:
-    name: "Mondoo security scan (DEV)"
+    name: "Mondoo security scan DEVELOPMENT ENVIRONMENT"
     needs: terraform-apply
     env:
       PROD_SCAN_OUTPUT: ""
@@ -212,11 +212,11 @@ jobs:
     - name: 'Security scan - DEV environment'
       id: gcp-runtime-scan
       run: |
-        echo "# Mondoo Security Scan  ${{ env.TF_VAR_project_id }} :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        echo "# Mondoo Security Scan - ${{ env.TF_VAR_project_id }} :white_check_mark:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY        
         echo "**Opened by:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY        
         cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} >> $GITHUB_STEP_SUMMARY
-
+        echo "{CNSPEC_DEV_SCAN}={$GITHUB_STEP_SUMMARY}" >> $GITHUB_ENV 
 
     - name: Notify Platform Engineering (Slack)
       id: slack
@@ -231,7 +231,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+                  "text": "${{ env.CNSPEC_DEV_SCAN }}"
                 }
               }
             ]
