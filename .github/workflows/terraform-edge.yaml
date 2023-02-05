@@ -237,7 +237,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "plain_text",
-                  "text": "Deployment to ${{ env.TF_VAR_project_id }} was ${{ jobs.terraform-apply.outcome }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+                  "text": "Deployment to ${{ env.TF_VAR_project_id }} was ${{ job.terraform-apply.outcome }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
                   "emoji": true
                 }
               },
