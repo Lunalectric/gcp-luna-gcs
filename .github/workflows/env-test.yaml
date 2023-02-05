@@ -22,7 +22,9 @@ jobs:
       - id: step3
         run: |
           curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
-          echo "test=$(cnspec scan gcp --project-id luna-gcs-edge-98604 -j | jq ".assets | .. | .url? | select(.) ")" >> $GITHUB_OUTPUT 
+          cnspec scan gcp --project-id luna-gcs-edge-98604 -j > gcp-scan.json 
+          sudo apt install -y jq
+          echo "test=$(cat gcp-scan.json | jq ".assets | .. | .url? | select(.) ")" >> $GITHUB_OUTPUT
   job2:
     runs-on: ubuntu-latest
     needs: job1
