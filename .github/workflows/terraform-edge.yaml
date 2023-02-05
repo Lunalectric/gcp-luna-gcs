@@ -216,8 +216,6 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY        
         echo "**Opened by:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY        
         cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} >> $GITHUB_STEP_SUMMARY
-        echo "{CNSPEC_DEV_SCAN}={$GITHUB_STEP_SUMMARY}" >> $GITHUB_ENV
-        echo $CNSPEC_DEV_SCAN
 
     - name: Notify Platform Engineering (Slack)
       id: slack
@@ -226,13 +224,31 @@ jobs:
         # For posting a rich message using Block Kit
         payload: |
           {
-            "text": "Deploy to Dev by ${{ github.actor }}: ${{ steps.run-terraform-apply.outcome }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
             "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "Mondoo Security Scan ",
+                  "emoji": true
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "plain_text",
+                  "text": "Deployment to ${{ env.TF_VAR_project_id }} was ${{ jobs.terraform-apply.outcome }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+                  "emoji": true
+                }
+              },
+              {
+                "type": "divider"
+              },
               {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "Deploy to Dev by ${{ github.actor }}: ${{ steps.gcp-dev-runtime-scan.output }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+                  "text": "*Mondoo security scan status:* ${{ steps.gcp-dev-runtime-scan.output.outcome }}\n*Scan report:*"
                 }
               }
             ]
