@@ -21,174 +21,143 @@ defaults:
     working-directory: ./terraform
 
 jobs:
-  terraform-pre-plan-tests:
-    name: "Terraform pre-plan testing"
-    runs-on: ubuntu-latest
-    steps:
-    - uses: 'actions/checkout@v3'
+  # terraform-pre-plan-tests:
+  #   name: "Terraform pre-plan testing"
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: 'actions/checkout@v3'
 
-    - id: 'google-cloud-auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+  #   - id: 'google-cloud-auth'
+  #     name: 'Authenticate to Google Cloud'
+  #     uses: 'google-github-actions/auth@v1'
+  #     with:
+  #       credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-    - uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_wrapper: false
+  #   - uses: hashicorp/setup-terraform@v2
+  #     with:
+  #       terraform_wrapper: false
 
-    - name: Terraform Init
-      id: init
-      run: terraform init -reconfigure
+  #   - name: Terraform Init
+  #     id: init
+  #     run: terraform init -reconfigure
 
-    - name: Terraform Format
-      id: fmt
-      run: terraform fmt -check  
+  #   - name: Terraform Format
+  #     id: fmt
+  #     run: terraform fmt -check  
 
-    - name: Terraform Validate
-      id: validate
-      run: terraform validate -no-color
+  #   - name: Terraform Validate
+  #     id: validate
+  #     run: terraform validate -no-color
 
-    - name: Setup cnspec
-      id: setup-cnspec
-      run: | 
-        curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
-        cnspec version
+  #   - name: Setup cnspec
+  #     id: setup-cnspec
+  #     run: | 
+  #       curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
+  #       cnspec version
 
-    - name: "Security scan: TERRAFORM HCL"
-      id: cnspec-pre-plan-scan-summary
-      run: |
-        echo "###Security scan: TERRAFORM HCL :white_check_mark:" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        cnspec scan terraform . >> $GITHUB_STEP_SUMMARY
-        echo "CNSPEC_PRE_SCAN=$GITHUB_STEP_SUMMARY" >> $GITHUB_ENV
+  #   - name: "Security scan: TERRAFORM HCL"
+  #     id: cnspec-pre-plan-scan-summary
+  #     run: |
+  #       echo "###Security scan: TERRAFORM HCL :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+  #       echo "" >> $GITHUB_STEP_SUMMARY
+  #       cnspec scan terraform . >> $GITHUB_STEP_SUMMARY
+  #       echo "CNSPEC_PRE_SCAN=$GITHUB_STEP_SUMMARY" >> $GITHUB_ENV
 
-  terraform-post-plan-testing:
-    name: "Terraform post-plan testing"
-    needs: terraform-pre-plan-tests
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: write
-    steps:
-    - uses: 'actions/checkout@v3'
+  # terraform-post-plan-testing:
+  #   name: "Terraform post-plan testing"
+  #   needs: terraform-pre-plan-tests
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     pull-requests: write
+  #     contents: write
+  #   steps:
+  #   - uses: 'actions/checkout@v3'
 
-    - id: 'google-cloud-auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+  #   - id: 'google-cloud-auth'
+  #     name: 'Authenticate to Google Cloud'
+  #     uses: 'google-github-actions/auth@v1'
+  #     with:
+  #       credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-    - uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_wrapper: false   
+  #   - uses: hashicorp/setup-terraform@v2
+  #     with:
+  #       terraform_wrapper: false   
 
-    - name: Terraform Init
-      id: init
-      run: terraform init -reconfigure
+  #   - name: Terraform Init
+  #     id: init
+  #     run: terraform init -reconfigure
 
-    - name: Terraform workspace edge
-      id: edge-workspace
-      run: terraform workspace select edge 
+  #   - name: Terraform workspace edge
+  #     id: edge-workspace
+  #     run: terraform workspace select edge 
 
-    - name: Terraform Plan
-      id: plan
-      run: terraform plan -no-color -input=false -var-file=edge.tfvars
-      continue-on-error: true
+  #   - name: Terraform Plan
+  #     id: plan
+  #     run: terraform plan -no-color -input=false -var-file=edge.tfvars
+  #     continue-on-error: true
 
-    - name: Convert Terraform plan to json
-      id: plan-to-json
-      run: |
-        terraform plan -var-file=edge.tfvars -out edge.tfplan
-        terraform show -json edge.tfplan > edge.json
+  #   - name: Convert Terraform plan to json
+  #     id: plan-to-json
+  #     run: |
+  #       terraform plan -var-file=edge.tfvars -out edge.tfplan
+  #       terraform show -json edge.tfplan > edge.json
 
-    - name: Setup cnspec
-      id: setup-cnspec
-      run: | 
-        curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
-        cnspec version
+  #   - name: Setup cnspec
+  #     id: setup-cnspec
+  #     run: | 
+  #       curl -sLO https://releases.mondoo.com/cnspec/7.15.1/cnspec_7.15.1_linux_amd64.deb && sudo dpkg -i cnspec_7.15.1_linux_amd64.deb
+  #       cnspec version
 
-    - name: "Security scan: TERRAFORM PLAN"
-      id: cnspec-post-plan-scan
-      env:
-        MONDOO_CONFIG_BASE64: ${{ secrets.MONDOO_CONFIG_BASE64 }}
-      run: |
-        echo "###Security scan: TERRAFORM PLAN :white_check_mark:" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        cnspec scan terraform plan edge.json >> $GITHUB_STEP_SUMMARY
+  #   - name: "Security scan: TERRAFORM PLAN"
+  #     id: cnspec-post-plan-scan
+  #     env:
+  #       MONDOO_CONFIG_BASE64: ${{ secrets.MONDOO_CONFIG_BASE64 }}
+  #     run: |
+  #       echo "###Security scan: TERRAFORM PLAN :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+  #       echo "" >> $GITHUB_STEP_SUMMARY
+  #       cnspec scan terraform plan edge.json >> $GITHUB_STEP_SUMMARY
 
-    # - name: Update Pull Request
-    #   uses: actions/github-script@v6
-    #   if: github.event_name == 'pull_request'
-    #   env:
-    #     PLAN: "terraform\n${{ env.TF_PLAN }}"
-    #     GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-    #   with:
-    #     github-token: ${{ secrets.GITHUB_TOKEN }}
-    #     script: |
-    #       const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-    #       #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-    #       #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-    #       #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+  #   - uses: actions/upload-artifact@v3
+  #     name: Upload edge.json
+  #     with:
+  #       name: edge.json
+  #       path: ./terraform/edge.json
 
-    #       <details><summary>Show Plan</summary>
+  # terraform-apply:
+  #   name: "Deploy changes: DEVELOPMENT ENVIRONMENT"
+  #   needs: terraform-post-plan-testing
+  #   runs-on: ubuntu-latest
 
-    #       \`\`\`\n
-    #       ${process.env.PLAN}
-    #       \`\`\`
+  #   steps:
+  #   - uses: 'actions/checkout@v3' 
 
-    #       </details>
+  #   - id: 'google-cloud-auth'
+  #     name: 'Authenticate to Google Cloud'
+  #     uses: 'google-github-actions/auth@v1'
+  #     with:
+  #       credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-    #       *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+  #   - uses: hashicorp/setup-terraform@v2
+  #     with:
+  #       terraform_wrapper: false
 
-    #       github.rest.issues.createComment({
-    #         issue_number: context.issue.number,
-    #         owner: context.repo.owner,
-    #         repo: context.repo.repo,
-    #         body: output
-    #       })
+  #   - name: Terraform Init
+  #     id: terraform-apply-init
+  #     run: terraform init -reconfigure 
 
-    - uses: actions/upload-artifact@v3
-      name: Upload edge.json
-      with:
-        name: edge.json
-        path: ./terraform/edge.json
+  #   - name: Terraform workspace edge
+  #     id: edge-workspace
+  #     run: terraform workspace select edge 
 
-  terraform-apply:
-    name: "Deploy changes: DEVELOPMENT ENVIRONMENT"
-    needs: terraform-post-plan-testing
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: 'actions/checkout@v3' 
-
-    - id: 'google-cloud-auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-
-    - uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_wrapper: false
-
-    - name: Terraform Init
-      id: terraform-apply-init
-      run: terraform init -reconfigure 
-
-    - name: Terraform workspace edge
-      id: edge-workspace
-      run: terraform workspace select edge 
-
-    - name: Terraform Apply
-      id: run-terraform-apply
-      run: terraform apply -auto-approve -input=false -var-file=edge.tfvars
+  #   - name: Terraform Apply
+  #     id: run-terraform-apply
+  #     run: terraform apply -auto-approve -input=false -var-file=edge.tfvars
 
   cnspec-runtime-scan:
     name: "Mondoo security scan DEVELOPMENT ENVIRONMENT"
-    needs: terraform-apply
-    env:
-      PROD_SCAN_OUTPUT: ""
+    # needs: terraform-apply
+    outputs:
+      scan-report-url: ${{ steps.gen-cnspec-url.outputs.scan-url }}
     permissions:
       pull-requests: write
       contents: write
@@ -225,7 +194,7 @@ jobs:
 
     - name: generate cnspec scan report 
       id: gen-cnspec-url
-      run: cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} -j | jq ".assets | .. | .url? | select(.) "
+      run: echo "scan-url=$(cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} -j | jq ".assets | .. | .url? | select(.) ")" >> $GITHUB_OUTPUT
 
     - name: Notify Platform Engineering (Slack)
       id: slack
@@ -235,14 +204,6 @@ jobs:
         payload: |
           {
             "blocks": [
-              {
-                "type": "header",
-                "text": {
-                  "type": "plain_text",
-                  "text": "Mondoo Security Scan ",
-                  "emoji": true
-                }
-              },
               {
                 "type": "section",
                 "text": {
@@ -258,7 +219,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*Mondoo security scan report:* <${{ steps.gen-cnspec-url.output }}|Click here to view report in the Mondoo console>"
+                  "text": "*Mondoo security scan report:* <${{ needs.step.gen-cnspec-url.outputs.scan-url }}|Click here to view report in the Mondoo console>"
                 }
               }
             ]
