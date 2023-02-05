@@ -216,7 +216,8 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY        
         echo "**Opened by:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY        
         cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} >> $GITHUB_STEP_SUMMARY
-        echo "{CNSPEC_DEV_SCAN}={$GITHUB_STEP_SUMMARY}" >> $GITHUB_ENV 
+        echo "{CNSPEC_DEV_SCAN}={$GITHUB_STEP_SUMMARY}" >> $GITHUB_ENV
+        echo $CNSPEC_DEV_SCAN
 
     - name: Notify Platform Engineering (Slack)
       id: slack
@@ -231,7 +232,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "$CNSPEC_DEV_SCAN"
+                  "text": "${{ env.CNSPEC_DEV_SCAN }}"
                 }
               }
             ]
