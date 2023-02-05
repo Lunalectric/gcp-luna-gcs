@@ -16,9 +16,9 @@ env:
   MONDOO_CONFIG_BASE64: ${{ secrets.MONDOO_CONFIG_BASE64 }}
 
 
-defaults:
-  run:
-    working-directory: ./terraform
+# defaults:
+#   run:
+#     working-directory: ./terraform
 
 jobs:
   # terraform-pre-plan-tests:
@@ -204,7 +204,7 @@ jobs:
     steps:
     - name: Echo scan url 
       run: echo ${{ needs.cnspec-runtime-scan.outputs.scan-url }}
-      
+
     - name: Notify Platform Engineering (Slack)
       id: slack
       uses: slackapi/slack-github-action@v1.23.0
