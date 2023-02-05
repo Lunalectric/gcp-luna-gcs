@@ -226,16 +226,8 @@ jobs:
         # For posting a rich message using Block Kit
         payload: |
           {
-            "text": "Deploy: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "${{ env.CNSPEC_DEV_SCAN }}"
-                }
-              }
-            ]
+            "text": "Deploy to DEV: ${{ steps.run-terraform-apply.outcome }}\nOpened by: ${{ github.actor }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+            "text": "Security Scan: ${{ steps.gcp-runtime-scan.outcome }}\n${{ steps.gcp-runtime-scan.output",
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
