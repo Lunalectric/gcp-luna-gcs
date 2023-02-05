@@ -10,7 +10,10 @@ jobs:
     outputs:
       output1: ${{ steps.step1.outputs.test }}
       output2: ${{ steps.step2.outputs.test }}
+      output3: ${{ steps.scan-gcp.outputs.test }}
     steps:
+      - id: scan-gcp
+        run: echo "test=$(cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} -j | jq ".assets | .. | .url? | select(.) ")" >> $GITHUB_OUTPUT 
       - id: step1
         run: echo "test=$(whoami)" >> $GITHUB_OUTPUT
       - id: step2
@@ -33,7 +36,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "plain_text",
-                    "text": "Environment test: ${{needs.job1.outputs.output1}} ${{needs.job1.outputs.output2}}",
+                    "text": "Environment test: ${{needs.job1.outputs.output1}} ${{needs.job1.outputs.output2}}\n${{needs.job1.outputs.output3}}",
                     "emoji": true
                   }
                 }
