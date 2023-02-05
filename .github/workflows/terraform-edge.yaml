@@ -225,7 +225,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*Mondoo security scan report:* <${{ needs.cnspec-runtime-scan.outputs.scan-url }}|Click here to view report in the Mondoo console>"
+                  "text": "*Mondoo security scan report:* ${{ needs.cnspec-runtime-scan.outputs.scan-url }}"
                 }
               }
             ]
