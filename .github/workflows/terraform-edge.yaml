@@ -179,6 +179,6 @@ jobs:
     - name: 'cnspec security scan: edge'
       id: gcp-runtime-scan
       run: |
-        echo "### Development security scan ${{ env.TF_VAR_project_id }} :shield:" >> $GITHUB_STEP_SUMMARY
+        echo "### Security scan: Development ${{ env.TF_VAR_project_id }} :shield:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY        
         cnspec scan gcp --project-id ${{ env.TF_VAR_project_id }} >> $GITHUB_STEP_SUMMARY
