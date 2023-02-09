@@ -11,15 +11,9 @@ resource "google_storage_bucket" "example_storage_from_resource" {
   location      = var.location
   force_destroy = true
 
-  uniform_bucket_level_access = true
+  uniform_bucket_level_access = false
 
-  labels = {
-    environment          = var.environment
-    git_org              = var.git_org
-    git_repo             = var.git_repo
-    team                 = var.team
-    managed_by_terraform = "true"
-  }
+  labels = {}
 }
 
 module "example_storage_from_module" {
@@ -31,16 +25,10 @@ module "example_storage_from_module" {
   location   = var.location
 
   bucket_policy_only = {
-    one   = true
-    two   = true
-    three = true
+    one   = false
+    two   = false
+    three = false
   }
 
-  labels = {
-    environment          = var.environment
-    git_org              = var.git_org
-    git_repo             = var.git_repo
-    team                 = var.team
-    managed_by_terraform = "true"
-  }
+  labels = {}
 }
