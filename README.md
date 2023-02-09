@@ -1,6 +1,8 @@
 # Luna GCS Provisioning
 
-[![cnspec Security Scanning](https://github.com/lunalectric/gcp-luna-gcs/actions/workflows/terraform.yaml/badge.svg)](https://github.com/Lunalectric/gcp-luna-gcs/actions/workflows/terraform.yaml?query=workflow%3Aterraform)
+[![Deploy to Edge](https://github.com/lunalectric/gcp-luna-gcs/actions/workflows/terraform-edge.yaml/badge.svg)](https://github.com/Lunalectric/gcp-luna-gcs/actions/workflows/terraform-edge.yaml?query=workflow%3Aterraform-edge)
+
+[![Deploy to Prod](https://github.com/lunalectric/gcp-luna-gcs/actions/workflows/terraform-prod.yaml/badge.svg)](https://github.com/Lunalectric/gcp-luna-gcs/actions/workflows/terraform-prod.yaml?query=workflow%3Aterraform-prod)
 
 This repository provides working examples of using [cnspec](https://cnspec.io) by [Mondoo](https://mondoo.com) as part of a production engineering workflow in order to find and fix security vulnerabilities and misconfigurations before they reach production.
 
