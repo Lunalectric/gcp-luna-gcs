@@ -124,7 +124,7 @@ jobs:
         path: ./terraform/edge.json
 
   terraform-apply:
-    name: "Deploy: Development"
+    name: "Deploy: Edge"
     needs: terraform-post-plan-testing
     runs-on: ubuntu-latest
 
@@ -154,7 +154,7 @@ jobs:
       run: terraform apply -auto-approve -input=false -var-file=edge.tfvars
 
   cnspec-runtime-scan:
-    name: "Security scan: Development"
+    name: "Security scan: Edge"
     needs: terraform-apply
     permissions:
       pull-requests: write
