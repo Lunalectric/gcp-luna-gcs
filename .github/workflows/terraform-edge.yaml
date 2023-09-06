@@ -52,7 +52,8 @@ jobs:
     - name: Setup cnspec
       id: setup-cnspec
       run: | 
-        curl -sLO https://releases.mondoo.com/mondoo/8.26.0/mondoo_8.26.0_linux_amd64.deb && sudo dpkg -i mondoo_8.26.0_linux_amd64.deb
+        curl -sLO https://releases.mondoo.com/cnquery/8.26.0/cnquery_8.26.0_linux_amd64.deb && sudo dpkg -i cnquery_8.26.0_linux_amd64.deb
+        curl -sLO https://releases.mondoo.com/cnspec/8.26.0/cnspec_8.26.0_linux_amd64.deb && sudo dpkg -i cnspec_8.26.0_linux_amd64.deb
         cnspec version
 
     - name: cnspec pre-plan security scan
@@ -105,7 +106,8 @@ jobs:
     - name: Setup cnspec
       id: setup-cnspec
       run: | 
-        curl -sLO https://releases.mondoo.com/mondoo/8.26.0/mondoo_8.26.0_linux_amd64.deb && sudo dpkg -i mondoo_8.26.0_linux_amd64.deb
+        curl -sLO https://releases.mondoo.com/cnquery/8.26.0/cnquery_8.26.0_linux_amd64.deb && sudo dpkg -i cnquery_8.26.0_linux_amd64.deb
+        curl -sLO https://releases.mondoo.com/cnspec/8.26.0/cnspec_8.26.0_linux_amd64.deb && sudo dpkg -i cnspec_8.26.0_linux_amd64.deb
         cnspec version
 
     - name: cnspec scan Terraform plan
@@ -173,7 +175,8 @@ jobs:
     - name: Setup cnspec
       id: setup-cnspec
       run: | 
-        curl -sLO https://releases.mondoo.com/mondoo/8.26.0/mondoo_8.26.0_linux_amd64.deb && sudo dpkg -i mondoo_8.26.0_linux_amd64.deb
+        curl -sLO https://releases.mondoo.com/cnquery/8.26.0/cnquery_8.26.0_linux_amd64.deb && sudo dpkg -i cnquery_8.26.0_linux_amd64.deb
+        curl -sLO https://releases.mondoo.com/cnspec/8.26.0/cnspec_8.26.0_linux_amd64.deb && sudo dpkg -i cnspec_8.26.0_linux_amd64.deb
         cnspec version
 
     - name: 'cnspec security scan: edge'
